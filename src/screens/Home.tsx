@@ -6,47 +6,77 @@ import Autocomplete from "react-native-autocomplete-input";
 
 import { FontAwesome5 } from "@expo/vector-icons";
 
+import city from "../../data/cities.json";
+import travelCities from "../../data/cheap_trip_travel_data.json";
+
 export interface Item {
   name: string;
 }
 
 export const Home: FC = () => {
-  const [forCity, setForCity] = useState("");
+  const [fromCity, setFromCity] = useState("");
   const [toCity, setToCity] = useState("");
-  const [cities, setCities] = useState([]);
-  const [hideForCity, setHideForCity] = useState(false);
-  const [hideToCity, setHideToCity] = useState(false);
+  // const [cities, setCities] = useState(city);
+  const [hideFromCity, setHideFromCity] = useState(true);
+  const [hideToCity, setHideToCity] = useState(true);
   const theme = useTheme();
 
-  const filtredCities = (forCity: string) => {
-    if (forCity) {
-      const cityFor = cities.slice(1).filter((item: { name: string }) => {
+  const filtredCities = (fromCity: string) => {
+    if (fromCity) {
+      const cities = city.cities.filter((item: { name: string }) => {
         const name = item.name;
         if (name === undefined) return;
-        return name.toLowerCase().indexOf(forCity.toLowerCase()) === 0;
+        return name.toLowerCase().indexOf(fromCity.toLowerCase()) === 0;
       });
-      return cityFor;
+      return cities;
     }
     return [];
   };
 
-  const dataForCity = filtredCities(forCity);
-  const dataToCity = filtredCities(toCity);
+  const dataForCity = filtredCities(fromCity);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const getCities = await fetch(
-          "https://graphproject-482d9-default-rtdb.europe-west1.firebasedatabase.app/locations.json"
-        );
-        const responseData = await getCities.json();
+  const filtredCitiesTravel = Object.values(travelCities).filter((item) => {
+    if (dataForCity.length) {
+      return item.from === +dataForCity[0].ID;
+    }
+    return;
+  });
 
-        await setCities(responseData);
-      } catch (error) {
-        console.log(error);
-      }
-    })();
-  }, []);
+  const travelCitiesTo = city.cities.filter((city) =>
+    filtredCitiesTravel.find((item) => item.to === +city.ID)
+  );
+  console.log(travelCitiesTo);
+  console.log(filtredCitiesTravel);
+  // const dataToCity = filtredCities(toCity);
+
+  const filtredCitiesTo = (toCity: string) => {
+    if (toCity) {
+      const cities = travelCitiesTo.filter((item: { name: string }) => {
+        const name = item.name;
+        if (name === undefined) return;
+        return name.toLowerCase().indexOf(toCity.toLowerCase()) === 0;
+      });
+      return cities;
+    }
+    return [];
+  };
+
+  const dataToCity = filtredCitiesTo(toCity);
+
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const getCities = await fetch(
+  //         "https://graphproject-482d9-default-rtdb.europe-west1.firebasedatabase.app/locations.json"
+  //       );
+  //       const responseData = await getCities.json();
+
+  //       await setCities(responseData);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   })();
+  // }, []);
 
   // const renderItems = ({ item }: { item: Item }) => <Text>{item.name}</Text>;
   return (
@@ -72,19 +102,19 @@ export const Home: FC = () => {
             }}
             listContainerStyle={{}}
             listStyle={{}}
-            hideResults={hideForCity}
+            hideResults={hideFromCity}
             data={dataForCity}
-            value={forCity}
+            value={fromCity}
             onChangeText={(text: string) => {
-              setForCity(text), setHideForCity(false);
+              setFromCity(text), setHideFromCity(false);
             }}
             flatListProps={{
               keyExtractor: (_: any, idx: any) => idx,
               renderItem: ({ item }: { item: Item }) => (
                 <Text
                   onPress={() => {
-                    setForCity(item.name);
-                    setHideForCity(true);
+                    setFromCity(item.name);
+                    setHideFromCity(true);
                   }}
                   style={styles.autocompleteText}
                 >
@@ -135,7 +165,7 @@ export const Home: FC = () => {
           icon="delete"
           mode="elevated"
           onPress={() => {
-            setForCity(""), setToCity("");
+            setFromCity(""), setToCity("");
           }}
         >
           Clear
